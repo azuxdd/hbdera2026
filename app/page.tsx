@@ -37,36 +37,24 @@
 
           // Lebarkan world physics bounds untuk 3 layar (2400 x 600)
           this.physics.world.setBounds(0, 0, 2400, 600);
-          this.cameras.main.setBackgroundColor("#87CEEB"); // Biru langit
+          this.cameras.main.setBackgroundColor("#111111"); // Gelap
 
-          // Bikin awan sederhana (disebar ke 3 layar)
-          const graphics = this.add.graphics();
-          graphics.fillStyle(0xffffff, 1);
-          graphics.fillCircle(200, 100, 40); graphics.fillCircle(240, 100, 50); graphics.fillCircle(280, 100, 40);
-          graphics.fillCircle(600, 150, 40); graphics.fillCircle(640, 150, 50); graphics.fillCircle(680, 150, 40);
-          graphics.fillCircle(1000, 100, 40); graphics.fillCircle(1040, 100, 50); graphics.fillCircle(1080, 100, 40);
-          graphics.fillCircle(1400, 150, 40); graphics.fillCircle(1440, 150, 50); graphics.fillCircle(1480, 150, 40);
-          graphics.fillCircle(1800, 100, 40); graphics.fillCircle(1840, 100, 50); graphics.fillCircle(1880, 100, 40);
+
 
           // UI Teks Skor (setScrollFactor(0) bikin UI ngikut layar)
-          this.scoreText = this.add.text(20, 20, "Kado Terkumpul: 0 / 6", {
+          this.scoreText = this.add.text(20, 20, "Potongan Terkumpul: 0 / 6", {
             fontSize: "24px", color: "#ffffff", stroke: "#000000", strokeThickness: 4,
           }).setScrollFactor(0);
           this.scoreText.setDepth(10); // Biar selalu di atas
+          this.physics.add.existing(this.scoreText, true);
 
           // Bikin Platform
-          const platformRects: Phaser.GameObjects.Rectangle[] = [];
+          const platformRects: any[] = [];
+          platformRects.push(this.scoreText);
           const createPlatform = (x: number, y: number, w: number, h: number, isWhite: boolean = false) => {
-            if (isWhite) {
-              const rect = this.add.rectangle(x, y, w, h, 0xffffff); // Blok Putih
-              this.physics.add.existing(rect, true);
-              platformRects.push(rect);
-            } else {
-              const rect = this.add.rectangle(x, y, w, h, 0x8B4513); // Coklat Tanah
-              this.physics.add.existing(rect, true);
-              this.add.rectangle(x, y - h / 2 + 4, w, 8, 0x32CD32); // Rumput Hijau
-              platformRects.push(rect);
-            }
+            const rect = this.add.rectangle(x, y, w, h, 0xffffff); // Blok Putih
+            this.physics.add.existing(rect, true);
+            platformRects.push(rect);
           };
 
           // Lantai dasar (Panjang 2400)
@@ -107,7 +95,6 @@
           createPlatform(2050, 520, 60, 20);
 
           // Player spawn di Layar 2
-          this.add.image(900, 420, "control_guide"); // Muncul di atas player
           this.player = this.physics.add.sprite(900, 500, "player");
           this.player.setCollideWorldBounds(true);
           this.player.body.setSize(this.player.width * 0.5, this.player.height * 0.6);
@@ -148,7 +135,8 @@
           this.physics.add.overlap(this.player, kadoGroup, (player, kado: any) => {
             kado.disableBody(true, true);
             this.collectedCount++;
-            this.scoreText.setText(`Kado Terkumpul: ${this.collectedCount} / 6`);
+            this.scoreText.setText(`Potongan Terkumpul: ${this.collectedCount} / 6`);
+            (this.scoreText.body as Phaser.Physics.Arcade.StaticBody).updateFromGameObject();
 
             if (this.collectedCount === 6) {
               this.scene.start("PuzzleScene");
@@ -377,36 +365,39 @@
           opacity: 0;
         }
       `}</style>
-      
+
       <div className={`flex flex-col items-center w-full min-h-screen bg-pink-900 overflow-x-hidden ${!isGameWon ? 'h-screen justify-center' : 'pt-10 pb-32'}`}>
-        
+
         {/* UI Overlay sebelum mulai */}
         {!isGameStarted && (
           <div className="absolute z-10 flex flex-col items-center p-8 bg-black/60 backdrop-blur-md rounded-xl border border-white/20 shadow-2xl">
-            <h1 className="text-4xl font-bold text-white mb-4">Misi Kejutan!</h1>
+            <h1 className="text-4xl font-bold text-white mb-4">Side Quest!!!</h1>
             <p className="text-slate-200 mb-8 max-w-md text-center">
-              Ada pesan rahasia yang pecah berkeping-keping. Kumpulkan semua kadonya dan satukan pesannya!
+              Ada pesan rahasia yang pecah berkeping-keping. Kumpulkan semua potongan puzzle dan satukan pesannya!
+            </p>
+            <p className="text-slate-200 mb-8 max-w-md text-center">
+              Bergerak menggunakan W-A-S atau Arrow Key. <br /> Berdiri diatas yang putih-putih.
             </p>
             <button
               onClick={() => setIsGameStarted(true)}
               className="px-8 py-3 bg-pink-500 hover:bg-pink-600 text-white font-bold rounded-full transition-transform hover:scale-105 active:scale-95"
             >
-              Mulai Main
+              Start
             </button>
           </div>
         )}
 
         {/* Container untuk Canvas Phaser */}
         <div className="relative w-[800px] h-[600px]">
-          <div 
-            id="game-container" 
+          <div
+            id="game-container"
             className={`rounded-lg overflow-hidden shadow-2xl transition-all duration-1000 ${isGameWon ? 'opacity-30 pointer-events-none grayscale' : ''}`}
           />
-          
+
           {/* Animated Message Extraction */}
           {isGameWon && (
-            <img 
-              src="/message.png" 
+            <img
+              src="/message.png"
               alt="Secret Message"
               className="absolute left-[250px] top-[200px] w-[300px] h-[200px] z-20 shadow-xl rounded-md animate-slideDownMessage"
             />
@@ -418,13 +409,13 @@
           <div className="flex flex-col items-center mt-[450px] text-center animate-fadeInBirthday">
             <h2 className="text-6xl font-black mb-6 drop-shadow-lg">
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-300 to-white">
-                Saengil Chukha, Ae-ra!
-              </span> 🎉
+                Saengil Chukha, Aera!
+              </span>
             </h2>
             <p className="text-2xl text-pink-100 font-medium mb-8 max-w-2xl leading-relaxed">
-              Selamat ulang tahun, Song Ae-ra! 🎂✨<br/>
-              Semoga panjang umur, sehat selalu, terus bahagia, dan segala impianmu dapat terwujud.<br/>
-              Tetap semangat dan jadikan tahun ini penuh dengan kejutan manis! 💖
+              Selamat ulang tahun, Aera Song!!! 🌸✨<br />
+              Semoga panjang umur, sehat selalu, terus bahagia, dan segala impianmu dapat terwujud.<br />
+              Tetap semangat!!!!! <br /> -Azu
             </p>
             <button
               onClick={() => window.location.reload()}
@@ -432,6 +423,9 @@
             >
               Main Lagi
             </button>
+            <p className="mt-8 text-sm text-white/70 italic text-center max-w-md">
+              P.S. Sori burik, tdnya kukira gajadi WKWKWK yaudah lah ya
+            </p>
           </div>
         )}
       </div>
